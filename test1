@@ -1,0 +1,82 @@
+
+install.packages("DESeq2")
+source("https://bioconductor.org/biocLite.R")    # try http:// if https:// URLs are not supported
+biocLite()
+biocLite("DESeq2")
+library(DESeq2)
+
+read.table("/Users/valentinlagarde/Documents/counts.txt",sep="\t",header=T, row.names=1)-> counts
+head(counts)
+rownames(counts)
+colnames(counts)
+
+names(counts)[1]<- "CB1"
+names(counts)[2]<- "CB2"
+names(counts)[3]<- "CB3"
+names(counts)[4]<- "CA1"
+names(counts)[5]<- "CB4"
+names(counts)[6]<- "CB5"
+names(counts)[7]<- "CB6"
+names(counts)[8]<- "CB7"
+names(counts)[9]<- "CA2"
+names(counts)[10]<- "CA3"
+names(counts)[11]<- "CA4"
+names(counts)[12]<- "CA5"
+names(counts)[13]<- "CA6"
+names(counts)[14]<- "CA7"
+
+head(counts)
+
+data.frame(condition=c("B","B","B","A","B","B","B","B","A","A","A","A","A","A") ,row.names =colnames(counts))-> mcounts
+
+all(rownames(mcounts)==colnames(counts))
+
+dds <- DESeqDataSetFromMatrix(countData  = counts,
+                              colData = mcounts,
+                              design= ~ condition)
+######### On peut faire un filtre pour calculer les variaitions entre les conditions:
+
+### option 1:
+
+op1<- rowSums(counts(dds)) >=10
+
+### option 2:
+
+op2<- rowSums(counts(dds)>10) >=2
+
+table(op1)
+table(op2)
+
+dds <- dds[op2,]
+
+dds$condition<- relevel(dds$condition, "A")
+
+dds2= DESeq(dds)
+
+res=results(dds2)
+res
+
+
+sum(res$padj < 0.5, na.rm=TRUE)
+
+#########Ne marche pas
+## resLFC <- lfcShrinks(dds, coef=2)
+## resLFC
+#########Ne marche pas
+res05 <- results(dds2, alpha=0.05)
+summary(res05)
+
+
+
+plotMA(res, ylim=c(-2,2))
+
+plotMA(resLFC, ylim=c(-2,2))
+
+
+
+
+
+
+
+
+
